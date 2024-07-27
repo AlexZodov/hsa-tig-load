@@ -95,19 +95,26 @@ services:
             - influxdb
         ports:
             - '8125:8125'
+        user: telegraf:0
+        networks:
+            hsa_12_net:
+                ipv4_address: 172.16.112.15
     
     influxdb:
         image:          arm64v8/influxdb:1.8.10
         container_name: influxdb
         restart:        always
         environment:
-            - INFLUXDB_DB=influx
+#            - INFLUXDB_DB=influx
             - INFLUXDB_ADMIN_USER=admin
             - INFLUXDB_ADMIN_PASSWORD=admin
         ports:
             - '8086:8086'
         volumes:
             - influxdb_data:/var/lib/influxdb
+        networks:
+            hsa_12_net:
+                ipv4_address: 172.16.112.16
     
     grafana:
         image:          grafana/grafana
@@ -125,6 +132,9 @@ services:
             - '4444:3000'
         volumes:
             - grafana_data:/var/lib/grafana
+        networks:
+            hsa_12_net:
+                ipv4_address: 172.16.112.17
 
 networks:
     hsa_12_net:

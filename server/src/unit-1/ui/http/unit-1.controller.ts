@@ -6,6 +6,7 @@ import {
   UpdateUnit1Handler,
   UpdateUnit1Request,
 } from '../../operation';
+import * as uuid from 'uuid';
 
 @Controller('/unit-1')
 export class Unit1Controller {
@@ -14,6 +15,16 @@ export class Unit1Controller {
     private readonly updateUnit1Handler: UpdateUnit1Handler,
     private readonly getUnit1Handler: GetUnit1Handler,
   ) {}
+
+  @Post('/random')
+  async createRandomUnit1(): Promise<Unit1Dto> {
+    const unit1 = await this.createUnit1Handler.handle({
+      unitId: uuid.v4(),
+      type: 'test',
+    });
+
+    return Unit1Dto.fromEntity(unit1);
+  }
 
   @Post('/')
   async createUnit1(@Body() dto: CreateUnit1Dto): Promise<Unit1Dto> {
