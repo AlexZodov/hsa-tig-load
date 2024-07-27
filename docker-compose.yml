@@ -78,6 +78,8 @@ services:
             - '5678:5678'
         depends_on:
             - hsa_12_server
+        volumes:
+            - ./docker/nginx/status.conf:/etc/nginx/conf.d/status.conf
         networks:
             hsa_12_net:
                 ipv4_address: 172.16.112.14
