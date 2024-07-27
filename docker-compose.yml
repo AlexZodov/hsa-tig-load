@@ -1,0 +1,143 @@
+version: "3.7"
+
+services:
+    hsa_12_server:
+        container_name: hsa_12_server
+        build: ./server
+        expose:
+            - 3000
+        ports:
+            - 0.0.0.0:9999:3000
+            - 0.0.0.0:9998:9249
+        command: npm run start:debug
+        volumes:
+            - ./server:/usr/src/app
+        networks:
+            hsa_12_net:
+                ipv4_address: 172.16.112.10
+    
+    hsa_12_db:
+        container_name: hsa_12_db
+        image: arm64v8/postgres:latest
+        environment:
+            POSTGRES_DB: hsa_12
+            POSTGRES_PASSWORD: password
+        ports:
+            - 4523:5432
+        volumes:
+            - hsa_12_db:/var/lib/postgresql/data
+        networks:
+            hsa_12_net:
+                ipv4_address: 172.16.112.11
+    
+    hsa_12_mongo:
+        container_name: hsa_12_mongo_1
+        image:          arm64v8/mongo:latest
+        restart:        always
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: secret
+            MONGO_INITDB_DATABASE:      hsa12
+        ports:
+            - 11223:27017
+        expose:
+            - 27017
+        volumes:
+            - mongodb_hsa:/data/db
+            - ./docker/mongodb/init/init-db.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+        networks:
+            hsa_12_net:
+                ipv4_address: 172.16.112.12
+    
+    elasticsearch:
+        image:          arm64v8/elasticsearch:8.14.3
+        container_name: elasticsearch
+        environment:
+            - cluster.name=docker-cluster
+            - discovery.type=single-node
+            - bootstrap.memory_lock=true
+            - xpack.security.enabled=false
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        volumes:
+            - esdata1:/usr/share/elasticsearch/data
+        ports:
+            - 9200:9200
+        networks:
+            hsa_12_net:
+                ipv4_address: 172.16.112.13
+            
+    nginx:
+        build: ./docker/nginx
+        expose:
+            - 5678
+        ports:
+            - '5678:5678'
+        depends_on:
+            - hsa_12_server
+        networks:
+            hsa_12_net:
+                ipv4_address: 172.16.112.14
+                
+    telegraf:
+        image:          arm64v8/telegraf
+        container_name: telegraf
+        restart:        always
+        volumes:
+            - ./docker/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+            - /var/run/docker.sock:/var/run/docker.sock
+        depends_on:
+            - influxdb
+        links:
+            - influxdb
+        ports:
+            - '8125:8125'
+    
+    influxdb:
+        image:          arm64v8/influxdb:1.8.10
+        container_name: influxdb
+        restart:        always
+        environment:
+            - INFLUXDB_DB=influx
+            - INFLUXDB_ADMIN_USER=admin
+            - INFLUXDB_ADMIN_PASSWORD=admin
+        ports:
+            - '8086:8086'
+        volumes:
+            - influxdb_data:/var/lib/influxdb
+    
+    grafana:
+        image:          grafana/grafana
+        container_name: grafana-server
+        restart:        always
+        depends_on:
+            - influxdb
+        environment:
+            - GF_SECURITY_ADMIN_USER=admin
+            - GF_SECURITY_ADMIN_PASSWORD=admin
+            - GF_INSTALL_PLUGINS=
+        links:
+            - influxdb
+        ports:
+            - '4444:3000'
+        volumes:
+            - grafana_data:/var/lib/grafana
+
+networks:
+    hsa_12_net:
+        name: hsa_12_net
+        ipam:
+            driver: default
+            config:
+            - subnet: 172.16.112.0/24
+
+volumes:
+    hsa_12_db: {}
+    mongodb_hsa:
+    influxdb_data:
+    grafana_data:
+    esdata1:
+        driver: local
