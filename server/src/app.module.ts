@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from './config';
 import { DatabaseModule } from './common/database';
 import { Unit1Module } from './unit-1/unit1.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { MyElasticsearchModule } from './common/elastic';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { MongooseModule } from '@nestjs/mongoose';
         };
       },
     }),
+    MyElasticsearchModule,
     Unit1Module,
   ],
 })

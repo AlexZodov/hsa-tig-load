@@ -21,6 +21,10 @@ export class ConfigService {
     url: process.env.MONGO_DATABASE_URL,
   };
 
+  elasticsearch = {
+    url: process.env.ELASTICSEARCH_URL,
+  };
+
   isProduction() {
     return process.env.NODE_ENV === 'production';
   }

@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import {
-  Unit1,
-  Unit1Document,
-  Unit1NotFoundError,
-} from '../domain';
+import { Unit1, Unit1Document, Unit1NotFoundError } from '../domain';
 import { Unit1MongooseRepository, Unit1Repository } from './interfaces';
+import { SearchService } from '../../common/elastic';
 
 type CreateUnit1Options = {
   id: string;
@@ -18,10 +15,11 @@ export class Unit1Service {
   constructor(
     private readonly repository: Unit1Repository,
     private readonly mongooseRepository: Unit1MongooseRepository,
+    private readonly searchService: SearchService,
   ) {}
 
   async create(options: CreateUnit1Options): Promise<Unit1> {
-    const unit1 = new Unit1();
+    let unit1 = new Unit1();
 
     unit1.id = options.id;
     unit1.type = options.type;
@@ -33,7 +31,11 @@ export class Unit1Service {
       updatedAt: new Date(),
     });
 
-    return this.repository.save(unit1);
+    unit1 = await this.repository.save(unit1);
+
+    await this.searchService.index('unit-1', unit1.id, unit1);
+
+    return unit1;
   }
 
   async update(options: UpdateUnit1Options): Promise<Unit1> {
