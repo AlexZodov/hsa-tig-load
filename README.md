@@ -16,6 +16,10 @@ HSA homework 1
 9. In host machine console run `siege` - this will initiate siege script to process urls given in file mentioned above
 10. Go to `localhost:4444` and observe metrics changes
 
+## Alt testing
+If siege is not your to-go option just configure your tool of choice to bombard `POST http://localhost:5678/api/v1/unit-1/random` with requests.
+This endpoint creates dummy entity with random generated id (UUIDv4) and store it to postgres, mongo and make an index of created model in elasticsearch/
+
 ## Proofs
 1. CPU / RAM / SWAP
 ![](./proofs/cpu_ram_swap.jpg) 
